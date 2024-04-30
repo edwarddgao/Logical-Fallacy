@@ -21,6 +21,7 @@ pipe = pipeline(
 generation_args = {
     "max_new_tokens": 3000,
     "return_full_text": False,
+    "temperature": 0.1,
 }
 
 # %%
@@ -40,13 +41,14 @@ df_total = pd.DataFrame()
 for subject in math_subjects:
     dataset = load_dataset("cais/mmlu", subject)
     for split in dataset.keys():
-        df = dataset['test'].to_pandas()
+        df = dataset[split].to_pandas()
         df["split"] = split
-        df_total = pd.concat([df_total, df])
+        df_total = pd.concat([df_total, df], ignore_index=True)
 
 # Save the dataset
 filename = "mmlu_math.csv"
 df_total.to_csv(filename, index=False)
+print(df['split'].value_counts())
 
 # %%
 import pandas as pd
@@ -59,10 +61,7 @@ df = pd.read_csv(filename)
 if 'rationale' not in df.columns:
     df['rationale'] = pd.NA
 
-# Loop through test split
-df_dev = df[df["split"] == "dev"]
-
-for i, row in tqdm(df_dev.iterrows()):
+for i, row in tqdm(df.iterrows()):
     if pd.notna(row["rationale"]):
         continue
 
@@ -76,7 +75,7 @@ for i, row in tqdm(df_dev.iterrows()):
     # Update the DataFrame immediately
     df.at[i, "rationale"] = rationale
     df.to_csv(filename, index=False)
-    
+
 # %%
 import matplotlib.pyplot as plt
 
